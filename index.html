@@ -2,24 +2,24 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pizza Bird - Torri Torri</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #fff; font-family: sans-serif; text-align: center; }
-    canvas { display: block; margin: 20px auto; background: linear-gradient(#facc15, #fff); border: 5px solid #000; touch-action: manipulation; }
-    #mensagem {
-      margin-top: 20px;
-      font-size: 24px;
-      color: green;
-      font-weight: bold;
-      display: none;
-    }
-    #vidas, #reiniciar {
+    canvas { display: none; margin: 20px auto; background: linear-gradient(#facc15, #fff); border: 5px solid #000; touch-action: manipulation; }
+    #formulario, #mensagem, #vidas, #reiniciar, #instrucoes, #btnInstagram {
       margin-top: 10px;
       font-size: 18px;
     }
-    #reiniciar {
+    #formulario input, #formulario button, #instrucoes button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      max-width: 300px;
+    }
+    #reiniciar, #btnInstagram {
       padding: 10px 20px;
       background-color: #facc15;
       border: none;
@@ -28,15 +28,37 @@
       cursor: pointer;
       display: none;
     }
+    #mensagem {
+      display: none;
+      color: green;
+      font-weight: bold;
+    }
+    #instrucoes {
+      display: block;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
   <h1 style="color: #facc15; margin: 20px 0;">🍕 Pizza Bird 🍕</h1>
-  <p>Ajude a pizza a passar pelos canos e ganhe até 20% de desconto!</p>
+  <div id="instrucoes">
+    <p>👆 Toque na tela ou aperte uma tecla para fazer a pizza voar</p>
+    <p>🚫 Não deixe ela bater nos canos</p>
+    <p>🎯 Passe por 3 canos para ganhar um cupom!</p>
+    <p>📝 Você precisa se cadastrar para jogar</p>
+    <button onclick="mostrarFormulario()">Entendi, quero jogar!</button>
+  </div>
+  <div id="formulario" style="display: none;">
+    <input type="text" id="nome" placeholder="Seu nome" required><br>
+    <input type="text" id="whatsapp" placeholder="WhatsApp" required><br>
+    <input type="email" id="email" placeholder="E-mail" required><br>
+    <button onclick="iniciarComCadastro()">Começar Jogo</button>
+  </div>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
   <div id="vidas">Vidas restantes: <span id="vidasContador">4</span></div>
   <div id="mensagem"></div>
   <button id="reiniciar">Tente novamente</button>
+  <button id="btnInstagram" onclick="window.location.href='https://www.instagram.com/toritoripizzas/'">Voltar ao Instagram</button>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -47,9 +69,39 @@
     let x, y, gravity, velocity, pipe, pipeGap, pipeWidth, pipeSpeed, gameRunning, passedPipes;
     let vidas = 4;
     let etapa = 1;
+    let jogouAntes = localStorage.getItem("jogoFinalizado") === "true";
     const mensagem = document.getElementById("mensagem");
     const reiniciar = document.getElementById("reiniciar");
     const vidasContador = document.getElementById("vidasContador");
+
+    if (jogouAntes) {
+      document.body.innerHTML = "<h1 style='margin-top: 50px;'>Você já participou e usou seu desconto! Obrigado por jogar 🍕</h1><button onclick=\"window.location.href='https://www.instagram.com/toritoripizzas/'\" style='margin-top: 20px; padding: 10px 20px; background-color: #facc15; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;'>Voltar ao Instagram</button>";
+    }
+
+    function mostrarFormulario() {
+      document.getElementById("instrucoes").style.display = 'none';
+      document.getElementById("formulario").style.display = 'block';
+    }
+
+    function iniciarComCadastro() {
+      const nome = document.getElementById('nome').value;
+      const whatsapp = document.getElementById('whatsapp').value;
+      const email = document.getElementById('email').value;
+
+      if (!nome || !whatsapp || !email) {
+        alert("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      fetch("https://script.google.com/macros/s/AKfycbz9LIgaMVJdsFNgTlXgHBcYYL6W21xE97XvRC-4dNmj_3Y1bnZeUpXYQ2ShJPCzJlgcqA/exec", {
+        method: "POST",
+        body: JSON.stringify({ nome, whatsapp, email })
+      });
+
+      document.getElementById("formulario").style.display = 'none';
+      canvas.style.display = 'block';
+      iniciarJogo();
+    }
 
     function configurarEtapa() {
       if (etapa === 1) {
@@ -132,25 +184,30 @@
     function fimDeEtapa() {
       if (passedPipes >= 3) {
         if (etapa === 1) {
-          mensagem.innerHTML = "🎉 Você ganhou <strong>5%</strong> de desconto! Use o cupom TORRI5.";
+          mensagem.innerHTML = "🎉 Você ganhou <strong>R$5</strong> de desconto! Use o cupom TORRI5.";
           etapa = 2;
         } else if (etapa === 2) {
-          mensagem.innerHTML = "🎉 Você ganhou <strong>10%</strong> de desconto! Use o cupom TORRI10.";
+          mensagem.innerHTML = "🎉 Você ganhou <strong>R$10</strong> de desconto! Use o cupom TORRI10.";
           etapa = 3;
         } else if (etapa === 3) {
-          mensagem.innerHTML = "🎉 Parabéns! Você ganhou <strong>20%</strong> de desconto! Use o cupom TORRI20.";
-          vidas = 0;
+          mensagem.innerHTML = "🎉 Parabéns! Você ganhou <strong>R$20</strong> de desconto! Use o cupom TORRI20.";
+          localStorage.setItem("jogoFinalizado", "true");
+          document.getElementById("btnInstagram").style.display = 'inline-block';
+          return;
         }
-        mensagem.style.display = "block";
-        vidasContador.textContent = vidas;
-        if (vidas > 0) reiniciar.style.display = 'inline-block';
       } else {
         mensagem.innerHTML = "😅 Você não completou a fase. Tente novamente!";
-        mensagem.style.display = "block";
-        vidas--;
-        vidasContador.textContent = vidas;
-        if (vidas > 0) reiniciar.style.display = 'inline-block';
-        else mensagem.innerHTML += "<br>💥 Fim de jogo. Obrigado por jogar!";
+      }
+
+      mensagem.style.display = "block";
+      vidas--;
+      vidasContador.textContent = vidas;
+
+      if (vidas > 0) {
+        reiniciar.style.display = 'inline-block';
+      } else {
+        mensagem.innerHTML += "<br>💥 Fim de jogo. Obrigado por jogar!";
+        document.getElementById("btnInstagram").style.display = 'inline-block';
       }
     }
 
@@ -165,7 +222,7 @@
     document.addEventListener("keydown", pular);
     canvas.addEventListener("touchstart", pular);
 
-    pizza.onload = iniciarJogo;
+    pizza.onload = () => {};
   </script>
 </body>
 </html>
